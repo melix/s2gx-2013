@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+	<meta name="viewport" content="width=1024, user-scalable=no">
+
+	<title>Type checking your DSLs</title>
+	
+	<!-- Required stylesheet -->
+	<link rel="stylesheet" href="core/deck.core.css">
+	
+	<!-- Extension CSS files go here. Remove or add as needed. -->
+	<link rel="stylesheet" href="extensions/goto/deck.goto.css">
+	<link rel="stylesheet" href="extensions/menu/deck.menu.css">
+	<link rel="stylesheet" href="extensions/navigation/deck.navigation.css">
+	<link rel="stylesheet" href="extensions/status/deck.status.css">
+	<link rel="stylesheet" href="extensions/hash/deck.hash.css">
+	<link rel="stylesheet" href="extensions/scale/deck.scale.css">
+
+	<!-- Style theme. More available in /themes/style/ or create your own. -->
+	<link rel="stylesheet" href="css/extra.css">
+	<link rel="stylesheet" href="css/springone13.css">
+
+	<!-- Transition theme. More available in /themes/transition/ or create your own. -->
+	<link rel="stylesheet" href="themes/transition/horizontal-slide.css">
+
+    <!-- CodeMirror stylesheet -->
+    <link rel="stylesheet" href="extensions/codemirror/deck.codemirror.css">
+
+    <link rel="stylesheet" href="extensions/codemirror/themes/neat.css">
+
+	<!-- Required Modernizr file -->
+	<script src="modernizr.custom.js"></script>
+</head>
+<body class="deck-container">
+
+<!-- Begin slides. Just make elements with a class of slide. -->
+
+<section class="slide">
+        <div class="vcenter">
+	<p><img src="images/badge13.jpg" alt="SpringOne2GX"></p>
+        <h1>Type checking your DSLs</h1>
+        <h3>Cédric Champeau, SpringSource</h3>
+        <h4>July 2013 22th</h4>
+        </div>
+</section>
+
+<section class="slide">
+	<h2>About me</h2>
+    <h3>Past : Groovy contributor</h3>
+                <ul>
+                    <li>Bugfixes
+                    <li>Modules: @Bytecode AST xform, GFreeMarker</li>
+                    <li>Core: compilation customizers, @xInterrupt, ...</li>
+                    <li>Used Groovy as a DSL for natural language processing</li>
+                </ul>
+    <h3>Present: Core Groovy committer</h3>
+            <ul>
+                <li>Compilation configuration</li>
+                <li>Static type checking & Static compilation</li>
+		<li>Bugfixing...</li>
+                <li>Groovy in Action 2 co-author</li>
+            </ul>
+    <h3>Follow me</h3>
+        <ul>
+            <li>Twitter: <a href="http://twitter.com/CedricChampeau" target="_blank">@CedricChampeau</a></li>
+            <li>Google+: <a href="http://gplus.to/cchampeau" target="_blank">http://gplus.to/cchampeau</a></li>
+            <li>Blog: <a href="http://jroller.com/melix" target="_blank">http://jroller.com/melix</a></li>
+        </ul>
+</section>
+
+<section class="slide">
+    <h2>Domain Specific Languages</h2>
+    <p>Focused</p>
+    <p>Readable</p>
+    <p>Practical</p>
+    <p>Usually <i>embeddable</i></p>
+    <p>Examples: SQL, HTML, XSLT, Ant/Maven/Gradle scripts...</p>
+</section>
+
+<section class="slide">
+    <h2>Static type checking</h2>
+    <p>Problems with <i>dynamic</i> code (of course!)</p>
+    <p>Problems with DSLs</p>
+    <div class="slide">
+        <textarea id="dsl1" name="dsl1" class="code" mode="groovy" style="display: none;">
+            please show me the code
+        </textarea>
+    </div>
+    <div class="slide">
+        <p>Equivalent to:</p>
+        <textarea id="dsl2" name="dsl2" class="code" mode="groovy" style="display: none;">
+            please(show).me(the).code
+        </textarea>
+    </div>
+</section>
+
+<section class="slide">
+    <h2>Solution</h2>
+    <textarea id="dsl2impl" name="dsl2impl" class="code" mode="groovy" style="display: none;">enum Action { show }
+import static Action.*
+@groovy.transform.TypeChecked
+class DSL {
+    String the // unused
+    Action action
+    DSL please(Action action) {
+        this.action=action
+        this
+    }
+    DSL me(unused) {
+        this
+    }
+    DSL getCode() {
+        if (action==show) { println 'the code' }
+    }
+    void foo() {
+        please show me the code
+    }
+}
+new DSL().foo() // success! (or is it?)
+    </textarea>
+</section>
+
+<section class="slide">
+    <h2>DSL type checking</h2>
+    <p>should not drive the implementation of the DSL</p>
+    <p>shoult not require wrappers of any sort</p>
+    <p>should be easy</p>
+</section>
+
+<section class="slide">
+    <h2>DSL type checking</h2>
+    <h3>New in Groovy 2.1: @DelegatesTo</h3>
+    <ul>
+        <li>Compatible with @CompileStatic</li>
+        <li>Helps the type checker knowing about the delegation metadata</li>
+        <li>original idea from Peter Niederwieser, at Groovy DevCon Copenhagen</li>
+    </ul>
+    <p>Example (exists in Gradle)</p>
+    <textarea id="dt1" name="dt1" class="code" mode="groovy" style="display: none;">def with(Object target, Closure arg) {
+    arg.delegate = target
+    arg()
+}
+class Foo {
+    def foo() { println 'Called foo' }
+}
+void test() {
+    def obj = new Foo()
+    with(obj) { foo() }
+}
+    </textarea>
+</section>
+
+<section class="slide">
+    <h2>DSL type checking</h2>
+    <h3>New in Groovy 2.1: @DelegatesTo</h3>
+    <textarea id="dt2" name="dt2" class="code" mode="groovy" style="display: none;">@groovy.transform.CompileStatic
+def with(Object target, Closure arg) {
+    arg.delegate = target
+    arg()
+}
+class Foo {
+    def foo() { println 'Called foo' }
+}
+@groovy.transform.CompileStatic
+void test() {
+    def obj = new Foo()
+    with(obj) { foo() } // [Static type checking] - Cannot find matching method ConsoleScript15#foo(). Please check if the declared type is right and if the method exists.
+}
+    </textarea>
+</section>
+
+<section class="slide">
+    <h2>DSL type checking</h2>
+    <h3>New in Groovy 2.1: @DelegatesTo</h3>
+    <textarea id="dt3" name="dt3" class="code" mode="groovy" style="display: none;">@groovy.transform.CompileStatic
+def with(Object target, @DelegatesTo(Foo) Closure arg) {
+                        // we delegate to the Foo class
+    arg.delegate = target
+    arg()
+}
+class Foo {
+    def foo() { println 'Called foo' }
+}
+@groovy.transform.CompileStatic
+void test() {
+    def obj = new Foo()
+    with(obj) { foo() } // passes!
+}
+test()
+    </textarea>
+</section>
+
+<section class="slide">
+    <h2>DSL type checking</h2>
+    <h3>New in Groovy 2.1: @DelegatesTo</h3>
+    <textarea id="dt4" name="dt4" class="code" mode="groovy" style="display: none;">@groovy.transform.CompileStatic
+def with(@DelegatesTo.Target Object target, @DelegatesTo Closure arg) {
+         // we delegate to the target parameter class
+    arg.delegate = target
+    arg()
+}
+class Foo {
+    def foo() { println 'Called foo' }
+}
+@groovy.transform.CompileStatic
+void test() {
+    def obj = new Foo()
+    with(obj) { foo() } // passes!
+}
+test()
+    </textarea>
+</section>
+
+<section class="slide">
+    <h2>@DelegatesTo</h2>
+    <h3>Upcoming in Groovy 2.2</h3>
+    <p>Thanks to Luke Daley for the suggestion</p>
+    <textarea id="dt5" name="dt5" class="code" mode="groovy" style="display: none;">public &lt;K,V&gt; void transform(
+       @DelegatesTo.Target Map&lt;K, V&gt; map,
+       @DelegatesTo(genericTypeIndex = 1) Closure&lt;?&gt; closure) {
+    map.keySet().each {
+        closure.delegate = map[it]
+        map[it] = closure()
+    }
+}
+def map = [1: 'a', 2: 'b', 3: 'c']
+transform(map) {
+    toUpperCase()
+}
+assert map == [1: 'A', 2: 'B', 3: 'C']</textarea>
+</section>
+
+<section class="slide">
+    <h2>A basic "embedded" DSL (1/2)</h2>
+    <ul>
+        <li>Principle: a user script ran through a <i>GroovyShell</i></li>
+        <li>We want to type check the user script</li>
+        <li>We use <i>CompilerConfiguration</i> to inject type checking</li>
+    </ul>
+    <textarea id="dsl5" name="dsl5" class="code" mode="groovy" style="display: none;">
+robot.move 100 // [Static type checking] - The variable [robot] is undeclared
+    </textarea>
+</section>
+
+<section class="slide">
+    <h2>A basic "embedded" DSL (1/2)</h2>
+    <ul>
+        <li><i>robot</i> is an injected variable (using the <i>binding</i>)</li>
+        <li>we know its type (class <i>Robot</i>)</li>
+        <li>How can I help the compiler?</li>
+    </ul>
+</section>
+
+
+<section class="slide">
+    <h2>Groovy 2.1: type checking extensions</h2>
+    <ul>
+        <li>Let's you hook into the type checking process</li>
+        <li>Gives you the ability to help the type checker</li>
+        <li>Made easy thanks to a DSL</li>
+    </ul>
+    <section class="slide">
+        <ul><li>You can even make the type checker behave like ObjC if you will</li></ul>
+    </section>
+</section>
+
+<section class="slide">
+    <h2>Event-based API</h2>
+    <ul>
+        <li>setup                   </li>
+        <li>finish                  </li>
+        <li>onMethodSelection       </li>
+        <li>afterMethodCall         </li>
+        <li>beforeMethodCall        </li>
+        <li>unresolvedVariable      </li>
+        <li>unresolvedProperty      </li>
+        <li>unresolvedAttribute     </li>
+        <li>ambiguousMethods        </li>
+        <li>methodNotFound          </li>
+        <li>afterVisitMethod        </li>
+        <li>beforeVisitMethod       </li>
+        <li>afterVisitClass         </li>
+        <li>beforeVisitClass        </li>
+        <li>incompatibleAssignment  </li>
+        <li>incompatibleReturnType  </li>
+    </ul>
+</section>
+
+<section class="slide">
+    <h2>The "robot" type checking extension</h2>
+    <textarea id="robot_ext" name="robot_ext" class="code" mode="groovy" style="display: none;">// Type checking extension for "Robot" DSL
+unresolvedVariable { var ->
+    if ('robot' == var.name) {
+        storeType(var, classNodeFor(Robot))
+        handled = true
+    }
+}
+    </textarea>
+</section>
+
+<section class="slide">
+    <h2>Translating error messages</h2>
+    <h3>What if users of your DSL</h3>
+    <ul>
+        <li>do not speak english?</li>
+        <li>are not developers?</li>
+    </ul>
+    <h3>Solution: intercepting errors</h3>
+    <textarea id="custom_ecol" name="custom_ecol" class="code" style="display:none" mode="groovy">
+setup {
+    def source = context.source
+    context.pushErrorCollector(
+            new ErrorCollector(source.configuration) {
+                @Override
+                void addErrorAndContinue(final Message message) {
+                    if (message instanceof SyntaxErrorMessage) {
+                        SyntaxException cause = message.cause
+                        def text = cause.originalMessage
+                        text = text.replaceAll('Cannot assign value of type (.*?) to variable of type (.*)', /Impossible d'affecter une valeur de type $1 dans une variable de type $2/)
+                        super.addErrorAndContinue(new SyntaxErrorMessage(new SyntaxException(text, cause.startLine, cause.startColumn), source))
+                        return
+                    }
+                    super.addErrorAndContinue(message)
+                }
+            })
+}
+
+finish {
+    def ec = context.popErrorCollector()
+    ec.errors.each {
+        context.errorCollector.addErrorAndContinue(it)
+    }
+}    </textarea>
+</section>
+
+<section class="slide">
+    <h2>Improved type checking</h2>
+    <p>Principle: throwing errors where Java would not</p>
+    <div class="slide">
+        <textarea id="sprintf" name="sprintf" class="code" mode="groovy" style="display: none;">// Courtesy of Paul King
+sprintf("Count = %d", count) // check that count is a Number (Integral number?)
+sprintf("Euler's constant = %+10.4f", Math.E) // check that the argument is a Number (float or double?)
+sprintf("Duke's Birthday: %1$tm %1$te,%1$tY", c) // check that c is a Date
+        </textarea>
+    </div>
+</section>
+<section class="slide">
+    <h2>Improved type checking</h2>
+    <h3>Sprintf type checking extension</h3>
+    <textarea id="sprintfdsl" name="sprintfdsl" class="code" mode="groovy" style="display: none;">afterMethodCall { mc ->
+    def method = getTargetMethod(mc)
+    if (isExtensionMethod(method) && method.name == 'sprintf') {
+        def argList = getArguments(mc)
+        if (argList && isConstantExpression(argList[0])) {
+            // ...
+            if (args.size() != codes.size()) {
+                addStaticTypeError("Found ${args.size()} parameters for sprintf call with ${codes.size()} conversion code placeholders in the format string", argList)
+                return
+            }
+            // ...
+            if (codeTypes != args) {
+                addStaticTypeError("Parameter types didn't match types expected from the format String: ", argList)
+                (0..&lt;args.size()).findAll { args[it] != codeTypes[it] }.each { n ->
+                    String msg = "For placeholder ${n + 1} [%${codes[n]}] expected '${codeTypes[n].toString(false)}' but was '${args[n].toString(false)}'"
+                    addStaticTypeError(msg, argList.getExpression(n + 1))
+                }
+            }
+        }
+    }
+}
+</textarea>
+</section>
+
+<section class="slide">
+    <h2>Writing type checking extensions</h2>
+    <h3>A lot of possibilities are open now!</h3>
+<p>What if you could introspect SQL queries?</p>
+    <p>See <a href="http://blog.andresteingress.com/2013/01/25/groovy-2-1-type-checking-extensions/" target="_blank">
+        André Steingress' blog post
+    </a></p>
+	<textarea id="bbex" name="bbex" class="code" mode="groovy" style="display: none;">
+import groovy.sql.Sql
+
+@groovy.transform.TypeChecked(extensions = ['SqlExtension.groovy'])
+class SqlTest {
+
+    def test() {
+    	def db = [url:'jdbc:hsqldb:mem:testDB', user:'sa', password:'', driver:'org.hsqldb.jdbc.JDBCDriver']
+ 	def sql = Sql.newInstance(db.url, db.user, db.password, db.driver)
+
+ 	sql.eachRow('select * frm PROJECT') { row -&gt; // compile-time error!
+	    println row
+	}
+    }
+}
+</textarea>
+</section>
+<section class="slide">
+    <h2>Writing type checking extensions</h2>
+    <h3>Checking SQL queries at compile time</h3>
+    <textarea id="bbex2" name="bbex2" class="code" mode="groovy" style="display: none;">@Grab(group='net.sf.jsqlparser', module='jsqlparser', version='0.8.0')
+import net.sf.jsqlparser.parser.CCJSqlParserManager
+
+afterMethodCall { mc ->
+  def receiver = mc.receiver
+  if (!isVariableExpression(receiver)) return
+
+  def method = getTargetMethod(mc)
+
+  if (classNodeFor(groovy.sql.Sql) == getType(receiver) && method.name == 'eachRow') {
+    def argList = getArguments(mc)
+    if (argList && isConstantExpression(argList[0])) {
+        def pm = new CCJSqlParserManager();
+        def sqlQuery = argList[0].text
+
+        try {
+            pm.parse(new StringReader(sqlQuery))
+            } catch (e) {
+                addStaticTypeError("SQL query is not valid: " + e, argList[0])
+            }
+        }
+    }
+}
+    </textarea>
+</section>
+
+<section class="slide">
+    <h2>Writing type checking extensions</h2>
+    <h3>Static builders inception</h3>
+    <ul>
+        <li>Builders are at the core of many Groovy DSLs</li>
+        <li>Builders cannot be statically checked (normally...)</li>
+        <li>Almost always use "delegate"</li>
+    </ul>
+    <section class="slide">
+        <h3>Can we...</h3>
+        <ul>
+            <li>Type check an HTMLBuilder?</li>
+            <li>Validate the syntax?</li>
+            <li>Statically compile?</li>
+            <li>Generate it?</li>
+        </ul>
+    </section>
+</section>
+
+<section class="slide">
+    <h2>What we want to achieve</h2>
+    <textarea id="inception1" name="inception1" class="code" mode="groovy" style="display: none;">@groovy.transform.CompileStatic
+String build() {
+    def builder = new HTMLBuilder()
+    builder.html {
+        body {
+            p {
+                out << "Hello, this is "
+                a(href:'http://groovy.codehaus.org') { out << 'Groovy' }
+            }
+        }
+    }
+}</textarea>
+    <p></p>
+    <section class="slide">
+    <textarea id="inception1_res" name="inception1_res" class="code" mode="html" style="display: none;">
+&lt;html&gt;&lt;body&gt;&lt;p&gt;Hello, this is &lt;a href='http://groovy.codehaus.org'&gt;Groovy&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;
+    </textarea>
+        </section>
+</section>
+
+<section class="slide">
+    <h2>Writing a statically checked builder</h2>
+    <h3>The hard way (1/4)</h3>
+    <textarea id="inception3" name="inception3" class="code" mode="groovy" style="display: none;">@CompileStatic
+class HTMLBuilder {
+
+   public static void delegateToTag(Class clazz, Closure body) {
+        def tag = clazz.newInstance()
+        def clone = body.rehydrate(tag, null, null)
+        clone()
+   }
+
+   void html(@DelegatesTo(HTMLTag) Closure html) {
+      delegateToTag(HTMLTag, html)
+   }
+
+   private static class HTMLTag {}
+}</textarea>
+</section>
+<section class="slide">
+    <h2>Writing a statically checked builder</h2>
+    <h3>The hard way (2/4)</h3>
+    <textarea id="inception4" name="inception4" class="code" mode="groovy" style="display: none;">@CompileStatic
+abstract class Tag {
+   protected final StringBuilder sb
+   Tag(StringBuilder sb) { this.sb = sb }
+
+   void openTag() {}
+   void closeTag() {}
+
+   public void delegateToTag(Class clazz, Closure body) {
+       Tag tag = (Tag) clazz.newInstance(sb)
+       def clone = body.rehydrate(tag, this, this)
+       tag.openTag()
+       clone()
+       tag.closeTag()
+   }
+}</textarea>
+</section>
+<section class="slide">
+    <h2>Writing a statically checked builder</h2>
+    <h3>The hard way (3/4)</h3>
+    <textarea id="inception5" name="inception5" class="code" mode="groovy" style="display: none;">@CompileStatic
+class HTMLBuilder extends Tag {
+
+   HTMLBuilder() { super(new StringBuilder()) }
+
+   void html(@DelegatesTo(HTMLTag) Closure html) {
+      delegateToTag(HTMLTag, html)
+   }
+
+   @InheritConstructors
+   private static class HTMLTag extends Tag {}
+}</textarea>
+</section>
+<section class="slide">
+    <h2>Writing a statically checked builder</h2>
+    <h3>The hard way (4/4)</h3>
+    <textarea id="inception6" name="inception6" class="code" mode="groovy" style="display: none;">
+   @InheritConstructors
+   private static class HTMLTag extends Tag {
+       void openTag() { sb.append '&lt;html&gt;' }
+       void closeTag() { sb.append '&lt;/html&gt;' }
+       void body(@DelegatesTo(BodyTag) Closure body) {
+           delegateToTag(BodyTag, body)
+       }
+       void head(@DelegatesTo(HeadTag) Closure head) { delegateToTag(HeadTag, head) }
+   }
+   @InheritConstructors
+   private static class BodyTag extends Tag {
+       void openTag() { sb.append '&lt;body&gt:' }
+       void closeTag() { sb.append '&lt;/body&gt:' }
+
+   }
+   @InheritConstructors
+   private static class HeadTag extends Tag {
+       void openTag() { sb.append '&lt;head&gt:' }
+       void closeTag() { sb.append '&lt;/head&gt:' }
+
+   }</textarea>
+</section>
+
+<section class="slide">
+    <h2>Writing a statically checked builder</h2>
+    <h3>Pros</h3>
+    <ul>
+        <li>Will report errors at compile time</li>
+        <li>Can be statically compiled</li>
+    </ul>
+    <h3>Cons</h3>
+    <ul>
+        <li>Dedicated</li>
+        <li>Difficult to extend</li>
+        <li>Duplicate code...</li>
+    </ul>
+    <section class="slide">
+        <h3>Can we do better?</h3>
+    </section>
+</section>
+<section class="slide">
+    <h2>Generating a statically checked builder</h2>
+    <textarea id="inception7" name="inception7" class="code" mode="groovy" style="display: none;">
+@StaticMarkupBuilder
+class HTMLBuilder {
+   static schema = {
+       html {
+           head {
+               title()
+           }
+           body {
+               p()
+               a(attributes:['href', 'target'])
+           }
+       }
+   }
+}</textarea>
+</section>
+<section class="slide">
+    <h2>Generating a statically checked builder</h2>
+    <h3>Usage</h3>
+    <textarea id="inception7_usage" name="inception7_usage" class="code" mode="groovy" style="display: none;">
+@CompileStatic
+void test() { // using a method to ensure that the builder will be statically compiled!
+    def out = new ByteArrayOutputStream()
+    def builder = new HTMLBuilder(out)
+    builder.html {
+        body {
+            p 'Hello, Groovy!'
+        }
+    }
+    println out.toString()
+}</textarea>
+</section>
+<section class="slide">
+    <h2>Generating a statically checked builder</h2>
+    <h3>The tools</h3>
+    <ul>
+        <li>@CompileStatic</li>
+        <li>AST transformations (local, global)</li>
+        <li>@Alias annotations (new in Groovy 2.1)</li>
+        <li>@DelegatesTo (new in Groovy 2.1)</li>
+        <li>Type checking extensions (new in Groovy 2.1)</li>
+    </ul>
+</section>
+
+<section class="slide">
+    <h2>Generating a statically checked builder</h2>
+    <h3>Step 1: an alias annotation</h3>
+    <h5>Given</h5>
+    <textarea id="inception7_given" name="inception7_given" class="code" mode="groovy" style="display: none;">
+@StaticMarkupBuilder // it's an alias!
+class HTMLBuilder {
+}
+</textarea>
+    <h5>Generate</h5>
+    <textarea id="inception7_generate" name="inception7_generate" class="code" mode="groovy" style="display: none;">
+//@StaticMarkupBuilder is expanded to:
+@CompileStatic
+@StaticMarkupBuilderGenerator
+class HTMLBuilder {
+}
+</textarea>
+</section>
+
+<section class="slide">
+    <h2>Generating a statically checked builder</h2>
+    <h3>Step 2: transforming the schema</h3>
+    <h5>Given</h5>
+    <textarea id="inception8_given" name="inception7_given" class="code" mode="groovy" style="display: none;">
+static schema = {
+  html {}
+}
+    </textarea>
+    <h5>Generate</h5>
+    <textarea id="inception8_generate" name="inception7_generate" class="code" mode="groovy" style="display: none;">
+void html(@DelegatesTo(HTMLBuilder$HtmlTag) Closure body) { ... }
+// ...
+@InheritConstructors
+private static class HtmlTag extends AbstractTag { ... }
+</textarea>
+    <section class="slide">
+        Also
+        <ul>
+            <li>string only methods (eg: p(String text))</li>
+            <li>empty body methods (eg: p())</li>
+            <li>inner-tags recursively</li>
+        </ul>
+    </section>
+</section>
+
+<section class="slide">
+    <h2>Generating a statically checked builder</h2>
+    <h3>Step 3: handling the attributes</h3>
+    <h5>Given</h5>
+    <textarea id="inception9_given" name="inception7_given" class="code" mode="groovy" style="display: none;">
+static schema = {
+  body {
+    a(attributes:['href','target'])
+  }
+}
+    </textarea>
+    <h5>Generate</h5>
+    <textarea id="inception9_generate" name="inception7_generate" class="code" mode="groovy" style="display: none;">
+public void a(
+        @StaticMarkupBuilderASTTransformation$CheckAttributes(value = ['target', 'href']) java.util.Map<java.lang.String, java.lang.String> attributes,
+        @groovy.lang.DelegatesTo(value = HTMLBuilder$ATag) groovy.lang.Closure code) {
+        this.delegateToTag(HTMLBuilder$ATag, code, attributes)
+}
+</textarea>
+</section>
+<section class="slide">
+    <h2>Generating a statically checked builder</h2>
+    <h3>Step 3: handling the attributes</h3>
+    <h5>A type checking extension...</h5>
+    <textarea id="inception9_tc_extension" name="inception9_tc_extension" class="code" mode="groovy" style="display: none;">
+onMethodSelection { expr, methodNode ->
+// ...
+                // found the map parameter
+                def constraint = it.getAnnotations(attrNode)[0].getMember('value')
+                def allowedParams = buildAllowedAnnotations(constraint)
+                def args = getArguments(expr)
+                def map = args[0] // we're sure it exists because it's the selected method
+                map.mapEntryExpressions.each {
+                    if (!allowedParams.contains(it.keyExpression.text)) {
+                        addStaticTypeError("Attribute ${it.keyExpression.text} is not allowed here", it)
+                    }
+                }
+            }
+        }
+    }
+}
+    </textarea>
+</section>
+
+<section class="slide">
+    <h2>Generating a statically checked builder</h2>
+    <h3>Step 4: transparently applying the extension</h3>
+    <ul>
+        <li>A global AST transformation</li>
+        <li>transforms all usages of @CompileStatic into @CompileStatic(extension='...')</li>
+    </ul>
+    <section class="slide">
+    <img src="images/success_baby.jpg">
+    </section>
+</section>
+
+<section class="slide">
+    <h2>Live demo</h2>
+    <div class="vcenter">
+        <img src="images/computer_problems.png"><br>
+        <h5>
+            <p>Code <a href="https://github.com/melix/staticbuilder" target="_blank">https://github.com/melix/staticbuilder</a></p>
+            <p>Explanations <a href="http://www.jroller.com/melix/entry/static_builders_inception" target="_blank">http://www.jroller.com/melix/entry/static_builders_inception</a></p>
+        </h5>
+        <h6><a href="http://xkcd.com/722/" target="_blank">xkcd.com/722</a></h6>
+    </div>
+</section>
+
+<section class="slide">
+    <h2>Pointers</h2>
+    <ul>
+        <li>@DelegatesTo documentation: <a href="http://groovy.codehaus.org/The+@DelegatesTo+annotation" target="_blank">http://groovy.codehaus.org/The+@DelegatesTo+annotation</a></li>
+        <li>Type checking extensions documentation: <a href="http://docs.codehaus.org/display/GROOVY/Type+checking+extensions" target="_blank">http://docs.codehaus.org/display/GROOVY/Type+checking+extensions</a></li>
+        <li>Static builders inception <a href="http://www.jroller.com/melix/entry/static_builders_inception" target="_blank">http://www.jroller.com/melix/entry/static_builders_inception</a></li>
+    </ul>
+</section>
+
+<section class="slide">
+    <h2>Questions?</h2>
+    <img src="images/questions.png">
+</section>
+
+<section class="slide">
+    <h2>Thanks!</h2>
+    <p>Slides with be uploaded to my <a href="https://github.com/melix" target="_blank">GitHub repository</a>.</p>
+    <p>Follow me on <a href="http://twitter.com/CedricChampeau">Twitter</a> for links.</p>
+</section>
+
+<!-- End slides. -->
+
+
+<!-- Begin extension snippets. Add or remove as needed. -->
+
+<!-- deck.navigation snippet -->
+<a href="#" class="deck-prev-link" title="Previous">&#8592;</a>
+<a href="#" class="deck-next-link" title="Next">&#8594;</a>
+
+<!-- deck.status snippet -->
+<p class="deck-status">
+	<span class="deck-status-current"></span>
+	/
+	<span class="deck-status-total"></span>
+</p>
+
+<!-- deck.goto snippet -->
+<form action="." method="get" class="goto-form">
+	<label for="goto-slide">Go to slide:</label>
+	<input type="text" name="slidenum" id="goto-slide" list="goto-datalist">
+	<datalist id="goto-datalist"></datalist>
+	<input type="submit" value="Go">
+</form>
+
+<!-- deck.hash snippet -->
+<a href="." title="Permalink to this slide" class="deck-permalink">#</a>
+
+<!-- End extension snippets. -->
+
+
+<!-- Required JS files. -->
+<script src="jquery-1.7.2.min.js"></script>
+<script src="core/deck.core.js"></script>
+<script src="extensions/codemirror/codemirror.js"></script>
+
+<!-- Extension JS files. Add or remove as needed. -->
+<script src="core/deck.core.js"></script>
+<script src="extensions/goto/deck.goto.js"></script>
+<script src="extensions/hash/deck.hash.js"></script>
+<script src="extensions/status/deck.status.js"></script>
+<script src="extensions/navigation/deck.navigation.js"></script>
+<script src="extensions/scale/deck.scale.js"></script>
+<script src="extensions/codemirror/deck.codemirror.js"></script>
+<script src="extensions/codemirror/mode/javascript/javascript.js"></script>
+<script src="extensions/codemirror/mode/groovy/groovy.js"></script>
+
+<!-- Initialize the deck. You can put this in an external file if desired. -->
+<script>
+	$(function() {
+        $.deck('.slide');
+        var opts = $.deck('getOptions');
+        opts.codemirror.theme = 'neat';
+	});
+</script>
+</body>
+</html>

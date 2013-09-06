@@ -1,0 +1,9 @@
+include 'example-joint-compil', 
+        'example-shell', 
+        'example-gse',
+        'example-spring',
+        'example-customizers'
+
+rootProject.name = 'integ-groovy-java'
+
+

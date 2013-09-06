@@ -1,0 +1,25 @@
+allprojects {
+    apply plugin: 'idea'
+}
+
+subprojects {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+
+    apply plugin: 'java'
+    apply plugin: 'groovy'
+
+    sourceCompatibility = 1.7
+    targetCompatibility = 1.7
+
+    compileJava.options.encoding = 'UTF-8'
+
+    dependencies {
+        compile 'org.codehaus.groovy:groovy-all:2.1.6'
+        testCompile 'junit:junit:4.11'
+    }
+}
+
+

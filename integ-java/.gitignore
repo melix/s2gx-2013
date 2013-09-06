@@ -1,0 +1,16 @@
+target
+build
+out
+*~
+.gradle
+*.iml
+*.ipr
+*.iws
+.idea
+.*.swp
+*.class
+.settings
+*.classpath
+*.project
+SPEAKERNOTES.txt
+

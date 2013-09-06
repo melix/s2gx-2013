@@ -1,0 +1,44 @@
+.slide .front-slide {
+    background-position: top center;
+    background-repeat: no-repeat;
+    text-align: center;
+}
+
+.front-slide .title {
+    font-size: 35pt;
+    font-weight: bolder;
+}
+.front-slide .subtitle {
+    font-size: 25pt;
+}
+.front-slide .subtitle2 {
+    font-size: 20pt;
+}
+
+.left {
+    float:left;
+    width:50%;
+}
+
+.right {
+    float:right;
+    width:50%;
+}
+
+.CodeMirror {
+-webkit-transition: all 200ms linear;
+    -moz-transition: all 200ms linear;
+    -o-transition: all 200ms linear;
+    transition: all 200ms linear;
+    -webkit-transform: translateZ(0) translateX(0);
+    -moz-transform: translateZ(0) translateX(0);
+    -o-transform: translateZ(0) translateX(0);
+    transform: translateZ(0) translateX(0);
+}
+.CodeMirror:hover {
+-webkit-transform: scale(1.2) translateZ(0) translateX(100px);
+    -moz-transform: scale(1.2) translateZ(0) translateX(100px);
+    -o-transform: scale(1.2) translateZ(0) translateX(100px);
+    transform: scale(1.2) translateZ(0) translateX(100px);
+}
+

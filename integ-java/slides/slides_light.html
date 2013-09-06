@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+	<meta name="viewport" content="width=1024, user-scalable=no">
+
+	<title>Type checking your DSLs</title>
+	
+	<!-- Required stylesheet -->
+	<link rel="stylesheet" href="core/deck.core.css">
+	
+	<!-- Extension CSS files go here. Remove or add as needed. -->
+	<link rel="stylesheet" href="extensions/goto/deck.goto.css">
+	<link rel="stylesheet" href="extensions/menu/deck.menu.css">
+	<link rel="stylesheet" href="extensions/navigation/deck.navigation.css">
+	<link rel="stylesheet" href="extensions/status/deck.status.css">
+	<link rel="stylesheet" href="extensions/hash/deck.hash.css">
+	<link rel="stylesheet" href="extensions/scale/deck.scale.css">
+
+	<!-- Style theme. More available in /themes/style/ or create your own. -->
+	<link rel="stylesheet" href="css/extra.css">
+	<link rel="stylesheet" href="css/springone13.css">
+
+	<!-- Transition theme. More available in /themes/transition/ or create your own. -->
+	<link rel="stylesheet" href="themes/transition/horizontal-slide.css">
+
+    <!-- CodeMirror stylesheet -->
+    <link rel="stylesheet" href="extensions/codemirror/deck.codemirror.css">
+
+    <link rel="stylesheet" href="extensions/codemirror/themes/neat.css">
+
+	<!-- Required Modernizr file -->
+	<script src="modernizr.custom.js"></script>
+</head>
+<body class="deck-container">
+
+<!-- Begin slides. Just make elements with a class of slide. -->
+
+<section class="slide">
+        <div class="vcenter">
+        <p><img src="images/badge13.jpg" alt="SpringOne2GX"></p>
+        <h1>Integrating Groovy in your Java applications</h1>
+        <h3>Cédric Champeau, SpringSource</h3>
+        </div>
+</section>
+
+<section class="slide">
+	<h2>About me</h2>
+    <h3>Past : Groovy contributor</h3>
+                <ul>
+                    <li>Bugfixes
+                    <li>Modules: @Bytecode AST xform, GFreeMarker</li>
+                    <li>Core: compilation customizers, @xInterrupt, ...</li>
+                    <li>Used Groovy as a DSL for natural language processing</li>
+                </ul>
+    <h3>Present: Core Groovy committer</h3>
+            <ul>
+                <li>Compilation configuration</li>
+                <li>Static type checking & Static compilation</li>
+		        <li>Bugfixing...</li>
+                <li>Groovy in Action 2 co-author</li>
+            </ul>
+    <h3>Follow me</h3>
+        <ul>
+            <li>Twitter: <a href="http://twitter.com/CedricChampeau" target="_blank">@CedricChampeau</a></li>
+            <li>Google+: <a href="http://gplus.to/cchampeau" target="_blank">http://gplus.to/cchampeau</a></li>
+            <li>Blog: <a href="http://jroller.com/melix" target="_blank">http://jroller.com/melix</a></li>
+        </ul>
+</section>
+
+<section class="slide">
+    <h2>Agenda</h2>
+    <ul>
+        <li>Why Groovy?</li>
+        <li>Required dependencies & building</li>
+        <li>Joint compilation</li>
+        <li>GroovyShell</li>
+        <li>GroovyScriptEngine</li>
+        <li>Spring</li>
+        <li>Compiler configuration</li>
+    </ul>
+</section>
+
+<section class="slide">
+    <h2>Why Groovy?</h2>
+    <p>Both scripting and fully-fledged language</p>
+    <p>Almost zero learning curve (from Java)</p>
+    <p>Multi-paradigm</p>
+    <p>Easy integration with Java</p>
+</section>
+
+<section class="slide">
+    <h2>Required dependencies</h2>
+    <h3>Option 1</h3>
+    <ul>
+        <li>groovy-2.x.y.jar: Groovy compiler and runtime</li>
+        <li>asm-4.1.jar: Bytecode generation library (required dependency)</li>
+        <li>antlr-2.7.7.jar: Parsing library (required dependency)</li>
+        <li>groovy-module-2.x.y.jar: optional modules (example: groovy-ant, groovy-xml, groovy-json)</li>
+    </ul>
+    <section class="slide">
+        <h3>Option 2</h3>
+        <ul>
+            <li>groovy-all-2.x.y.jar: Standalone jar with all modules included</li>
+            <li>avoids conflicts with ASM or Antlr</li>
+        </ul>
+    </section>
+    <section class="slide">
+        <h3>If you use @Grab</h3>
+        <p>Add ivy.jar (dependency management library)</p>
+    </section>
+</section>
+
+<section class="slide">
+    <h2>Building with Maven</h2>
+    <h3>Recommended: GroovyEclipse compiler</h3>
+    <textarea id="maven1" name="maven1" class="code" style="display:none" mode='xml'>&lt;build&gt;
+...
+&lt;plugins&gt;
+  &lt;plugin&gt;
+    &lt;artifactId&gt;maven-compiler-plugin&lt;/artifactId&gt;
+    &lt;version&gt;3.0&lt;/version&gt;
+    &lt;configuration&gt;
+      &lt;compilerId&gt;groovy-eclipse-compiler&lt;/compilerId&gt;
+    &lt;/configuration&gt;
+    &lt;dependencies&gt;
+      &lt;dependency&gt;
+        &lt;groupId&gt;org.codehaus.groovy&lt;/groupId&gt;
+        &lt;artifactId&gt;groovy-eclipse-compiler&lt;/artifactId&gt;
+        &lt;version&gt;2.8.0-01&lt;/version&gt;
+      &lt;/dependency&gt;
+      &lt;dependency&gt;
+        &lt;groupId&gt;org.codehaus.groovy&lt;/groupId&gt;
+        &lt;artifactId&gt;groovy-eclipse-batch&lt;/artifactId&gt;
+       &lt;version&gt;2.1.5-03&lt;/version&gt;
+      &lt;/dependency&gt;
+    &lt;/dependencies&gt;
+  &lt;/plugin&gt;
+...
+&lt;/plugins&gt;
+&lt;/build&gt;</textarea>
+</section>
+
+<section class="slide">
+    <h2>Building with Maven</h2>
+    <h3>Recommended: GroovyEclipse compiler</h3>
+    <textarea id="maven2" name="maven2" class="code" style="display:none" mode='xml'>&lt;dependencies&gt;
+  ...
+  &lt;dependency&gt;
+    &lt;groupId&gt;org.codehaus.groovy&lt;/groupId&gt;
+    &lt;artifactId&gt;groovy-all&lt;/artifactId&gt;
+    &lt;version&gt;1.8.6&lt;/version&gt;
+  &lt;/dependency&gt;
+  ...
+&lt;/dependencies&gt;
+</textarea>
+</section>
+
+<section class="slide">
+    <h2>Building with Gradle</h2>
+    <h3>Use the Groovy plugin</h3>
+    <textarea id="gradle" name="gradle" class="code" style="display:none" mode="groovy">apply plugin: 'java'
+apply plugin: 'groovy'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile 'org.codehaus.groovy:groovy-all:2.1.6'
+}
+    </textarea>
+</section>
+
+<section class="slide">
+    <h2>Joint compilation</h2>
+    <p>Groovy compiles to JVM bytecode</p>
+    <p>Classes are compatible with Java</p>
+    <section class="slide">
+        <p>Use <pre>groovyc -j</pre> from command line</p>
+        <p>Put Java sources in <pre>groovy</pre> directory with Gradle</p>
+        <p><a href="../example-joint-compil" target="_blank">Example</a></p>
+    </section>
+
+</section>
+
+<section class="slide">
+    <h2>Eval.me</h2>
+    <p>Easiest way to call Groovy from Java</p>
+    <p>Limited use</p>
+    <textarea id="eval_me" name="eval_me" class="code" style="display:none" mode="groovy">
+        Eval.me("println 'Hello, Santa Clara!'");
+    </textarea>
+    <p><a href="../example-shell/src/main/java/com/acme/eval/ExpressionEvaluation.java" target="_blank">Example</a></p>
+    <section class="slide">
+        <p>Only suitable for small expressions</p>
+        <p>Some variants: Eval.x, Eval.xy, Eval.xyz</p>
+        <p>What if we want more?</p>
+    </section>
+</section>
+
+<section class="slide">
+    <h2>GroovyShell</h2>
+    <p>Fully configurable</p>
+    <p>Uses a binding to share more than 3 variables</p>
+    <p>Example</p>
+    <textarea id="gshell1" name="gshell1" class="code" style="display:none" mode="groovy">
+def binding = new Binding(a: 3, b: 4, c: 5, txt: 'foo' )
+def shell = new GroovyShell(binding)
+def result = shell.evaluate('"$txt: ${a*b+c}"')
+assert result == 'foo: 17'
+    </textarea>
+</section>
+
+<section class="slide">
+    <h2>GroovyScriptEngine</h2>
+    <p>Supports multiple classes</p>
+    <p>Automatic caching</p>
+    <p>Automatic reloading</p>
+    <p>Gives direct access to the script class</p>
+    <a href="./example-gse" target="_blank">Example</a>
+</section>
+
+<section class="slide">
+    <h2>Integrating with a Spring application</h2>
+    <p>Supports beans written in Groovy</p>
+    <p>Beans can be refreshed</p>
+    <a href="./example-spring" target="_blank">Example</a>
+    <section class="slide">
+        <h2>Also attend...</h2>
+        <blockquote cite="http://www.springone2gx.com/conference/santa_clara/2013/09/session?id=29409">
+            <p>Zero Effort Spring</p>
+            <p><cite>Dave Syer and Phil Webb (Tuesday, 12:45)</cite></p>
+        </blockquote>
+        <blockquote cite="http://www.springone2gx.com/conference/santa_clara/2013/09/session?id=29362">
+            <p>Making Spring Groovy</p>
+            <p><cite>Ken Kousen (Tuesday, 2:30pm)</cite></p>
+        </blockquote>
+    </section>
+</section>
+
+<section class="slide">
+    <h2>Advanced compiler configuration</h2>
+    <h3>The CompilerConfiguration class</h3>
+    <p>Gives access to compilation options</p>
+    <ul>
+        <li>source encoding</li>
+        <li>classpath</li>
+        <li>script base class</li>
+        <li>optimization options</li>
+        <li>...</li>
+    </ul>
+</section>
+
+<section class="slide">
+    <h2>Advanced compiler configuration</h2>
+    <h3>Compilation customizers</h3>
+    <p>Perfect for embedded DSLs</p>
+    <p>Pushes compilation configuration further</p>
+    <ul>
+        <li>Import customizer</li>
+        <li>AST xforms customizer</li>
+        <li>Secure AST customizer</li>
+        <li>Source aware customizer</li>
+        <li>...</li>
+    </ul>
+</section>
+
+<section class="slide">
+    <h2>Questions?</h2>
+    <img src="images/questions.png">
+</section>
+
+<section class="slide">
+    <h2>Thanks!</h2>
+    <p>Slides with be uploaded to my <a href="https://github.com/melix" target="_blank">GitHub repository</a>.</p>
+    <p>Follow me on <a href="http://twitter.com/CedricChampeau">Twitter</a> for links.</p>
+</section>
+
+<!-- End slides. -->
+
+
+<!-- Begin extension snippets. Add or remove as needed. -->
+
+<!-- deck.navigation snippet -->
+<a href="#" class="deck-prev-link" title="Previous">&#8592;</a>
+<a href="#" class="deck-next-link" title="Next">&#8594;</a>
+
+<!-- deck.status snippet -->
+<p class="deck-status">
+	<span class="deck-status-current"></span>
+	/
+	<span class="deck-status-total"></span>
+</p>
+
+<!-- deck.goto snippet -->
+<form action="." method="get" class="goto-form">
+	<label for="goto-slide">Go to slide:</label>
+	<input type="text" name="slidenum" id="goto-slide" list="goto-datalist">
+	<datalist id="goto-datalist"></datalist>
+	<input type="submit" value="Go">
+</form>
+
+<!-- deck.hash snippet -->
+<a href="." title="Permalink to this slide" class="deck-permalink">#</a>
+
+<!-- End extension snippets. -->
+
+
+<!-- Required JS files. -->
+<script src="jquery-1.7.2.min.js"></script>
+<script src="core/deck.core.js"></script>
+<script src="extensions/codemirror/codemirror.js"></script>
+
+<!-- Extension JS files. Add or remove as needed. -->
+<script src="core/deck.core.js"></script>
+<script src="extensions/goto/deck.goto.js"></script>
+<script src="extensions/hash/deck.hash.js"></script>
+<script src="extensions/status/deck.status.js"></script>
+<script src="extensions/navigation/deck.navigation.js"></script>
+<script src="extensions/scale/deck.scale.js"></script>
+<script src="extensions/codemirror/deck.codemirror.js"></script>
+<script src="extensions/codemirror/mode/groovy/groovy.js"></script>
+<script src="extensions/codemirror/mode/xml/xml.js"></script>
+
+<!-- Initialize the deck. You can put this in an external file if desired. -->
+<script>
+	$(function() {
+        $.deck('.slide');
+        var opts = $.deck('getOptions');
+        opts.codemirror.theme = 'neat';
+	});
+</script>
+</body>
+</html>
