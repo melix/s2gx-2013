@@ -21,11 +21,11 @@ import groovy.lang.GroovyShell;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 
-public class ImplementJavaInterface {
+public class E6_ImplementJavaInterface {
     public static void main(String[] args) throws UnsupportedEncodingException {
         GroovyShell shell = new GroovyShell();
         Object person = shell.evaluate(
-                new InputStreamReader(ImplementJavaInterface.class.getClassLoader().getResourceAsStream("scripts/script2.groovy"), "UTF-8"));
+                new InputStreamReader(E6_ImplementJavaInterface.class.getClassLoader().getResourceAsStream("scripts/script2.groovy"), "UTF-8"));
         System.out.println("person = " + person);
 
         // cannot cast to Person because class has been dynamically generated

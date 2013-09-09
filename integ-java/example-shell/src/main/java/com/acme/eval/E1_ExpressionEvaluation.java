@@ -17,24 +17,20 @@ package com.acme.eval;
 
 import groovy.util.Eval;
 
-public class ExpressionEvaluationWithBinding {
-    public static void main(String[] args) {
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 
-        // capture the "x" variable
-        Object result = Eval.me("x", 2, "2*x+1");
-        System.out.println("result = " + result);
-
-        // short version
-        result = Eval.x(2, "3*x+2");
-        System.out.println("result = " + result);
-
-        // two-param binding
-        result = Eval.xy(3, 4, "x*y+3");
-        System.out.println("result = " + result);
-
-        // three-param binding
-        result = Eval.xyz(3, 4, 5, "x*y+z");
-        System.out.println("result = " + result);
-
+public class E1_ExpressionEvaluation {
+    public static void main(String[] args) throws IOException {
+        Eval.me("println 'This is an expression evaluator'");
+        Object result = null;
+        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+        while (result == null || !result.equals(-1)) {
+            System.out.println("What do you want to evaluate?");
+            String code = reader.readLine();
+            result = Eval.me(code);
+            System.out.println("result = " + result);
+        }
     }
 }

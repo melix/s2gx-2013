@@ -21,9 +21,9 @@ import groovy.util.GroovyScriptEngine;
 import java.io.File;
 import java.net.URL;
 
-public class GroovyScriptEngineClassReload {
+public class E2_GroovyScriptEngineClassReload {
     public static void main(String[] args) throws Exception {
-//        URL scriptsDir = GroovyScriptEngineReloader.class.getClassLoader().getResource("scripts/");
+//        URL scriptsDir = E1_GroovyScriptEngineReloader.class.getClassLoader().getResource("scripts/");
         // using hard coded path for live demo in intellij
         URL scriptsDir = new File("/home/cchampeau/Documents/talks/s2gx_2013/integ-java/example-gse/src/main/resources/scripts").toURI().toURL();
         GroovyScriptEngine engine = new GroovyScriptEngine(new URL[]{scriptsDir});

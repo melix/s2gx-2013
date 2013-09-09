@@ -23,7 +23,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-public class GroovyShellParseTest {
+public class E4_GroovyShellParseTest {
 
     @Test
     public void shouldInstantiateScript() {
@@ -47,7 +47,7 @@ public class GroovyShellParseTest {
     @Test
     public void shouldUseScriptBaseClass() {
         CompilerConfiguration config = new CompilerConfiguration();
-        config.setScriptBaseClass("com.acme.shell.GroovyShellParseTest.MyScript");
+        config.setScriptBaseClass("com.acme.shell.E4_GroovyShellParseTest.MyScript");
 
         GroovyShell shell = new GroovyShell(config);
         MyScript myScript = (MyScript) shell.parse("x+y");

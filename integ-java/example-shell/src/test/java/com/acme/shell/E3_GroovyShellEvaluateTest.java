@@ -24,7 +24,7 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
-public class GroovyShellEvaluateTest {
+public class E3_GroovyShellEvaluateTest {
     @Test
     public void testSimpleShellEvaluation() {
         GroovyShell shell = new GroovyShell();
