@@ -193,7 +193,7 @@ dependencies {
     <textarea id="eval_me" name="eval_me" class="code" style="display:none" mode="groovy">
         Eval.me("println 'Hello, Santa Clara!'");
     </textarea>
-    <p><a href="../example-shell/src/main/java/com/acme/eval/ExpressionEvaluation.java" target="_blank">Example</a></p>
+    <p><a href="../example-shell/src/main/java/com/acme/eval/E1_ExpressionEvaluation.java" target="_blank">Example</a></p>
     <section class="slide">
         <p>Only suitable for small expressions</p>
         <p>Some variants: Eval.x, Eval.xy, Eval.xyz</p>
@@ -205,7 +205,7 @@ dependencies {
     <h2>GroovyShell</h2>
     <p>Fully configurable</p>
     <p>Uses a binding to share more than 3 variables</p>
-    <p>Example</p>
+    <p><a href="../example-shell/" target="_blank">Example</a></p>
     <textarea id="gshell1" name="gshell1" class="code" style="display:none" mode="groovy">
 def binding = new Binding(a: 3, b: 4, c: 5, txt: 'foo' )
 def shell = new GroovyShell(binding)
@@ -220,7 +220,7 @@ assert result == 'foo: 17'
     <p>Automatic caching</p>
     <p>Automatic reloading</p>
     <p>Gives direct access to the script class</p>
-    <a href="./example-gse" target="_blank">Example</a>
+    <a href="../example-gse" target="_blank">Example</a>
 </section>
 
 <section class="slide">
@@ -228,14 +228,14 @@ assert result == 'foo: 17'
     <p>What if you don't want to extend <i>Script?</i></p>
     <p>Allows to parse arbitrary classes</p>
     <p>Implement your own caching strategy</p>
-    <a href="./example-gcl" target="_blank">Example</a>
+    <a href="../example-gcl" target="_blank">Example</a>
 </section>
 
 <section class="slide">
     <h2>Integrating with a Spring application</h2>
     <p>Supports beans written in Groovy</p>
     <p>Beans can be refreshed</p>
-    <a href="./example-spring" target="_blank">Example</a>
+    <a href="../example-spring" target="_blank">Example</a>
     <section class="slide">
         <h2>Also attend...</h2>
         <blockquote cite="http://www.springone2gx.com/conference/santa_clara/2013/09/session?id=29409">
